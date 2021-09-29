@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanilla JS Upload</title>
+  </head>
+  <body>
+    <h1>File Uploader</h1>
+
+    <input type="file" id="file" />
+    <button id="upload">Upload</button>
+    <div id="output"></div>
+
+    <script>
+      const upload = document.getElementById("upload");
+      const output = document.getElementById("output");
+      const file = document.getElementById("file");
+
+      upload.addEventListener("click", () => {
+        const reader = new FileReader();
+        const mainFile = file.files[0];
+        reader.onload = async(e) => {
+          const CHUNKSIZE = 100000;
+          const CHUNK_COUNT = e.target.result.byteLength / CHUNKSIZE;
+          const fileName = Math.floor(Date.now()/1000)+mainFile.name
+          for (let id = 0; id < CHUNK_COUNT+1; id++) {
+            const chunk = e.target.result.slice(id*CHUNKSIZE,id*CHUNKSIZE+CHUNKSIZE);
+            const res = await fetch('http://localhost:8080/upload',{
+                "method":"POST",
+                "headers":{
+                    "content-type":"application/octet-stream",
+                    "content-length":chunk.length,
+                    "file-name":fileName
+                },
+                "body":chunk
+            })
+            output.textContent = Math.floor(id*100/CHUNK_COUNT)+"%"
+          }
+
+          console.log(e.target.result.byteLength);
+        };
+        reader.readAsArrayBuffer(mainFile);
+      });
+    </script>
+  </body>
+</html>
